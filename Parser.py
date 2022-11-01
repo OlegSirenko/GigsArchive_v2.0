@@ -43,8 +43,14 @@ def main():
 if __name__ == "__main__":
     session = vk.session.API(access_token=token)  # Авторизация
     vk_api = vk.API(session)
-    start_time = datetime.datetime.now().strftime("%H:%M:%S")
+    time_now = datetime.datetime.now().hour
+    test = datetime.datetime.strptime("21:45", "%H:%M").hour
+    start_time = datetime.datetime.strptime("21:15", "%H:%M").hour
+    delta = datetime.timedelta(hours=start_time-time_now).seconds
+    delta_test = datetime.timedelta(hours=start_time-test).seconds
+    print(delta_test)
     while True:
+        time_now = datetime.datetime.now().hour
         main()
         logger.info(f"Sleep Until {start_time}")
         time.sleep(86400)

@@ -22,15 +22,6 @@ db_posters = DatabasePosters()  # import database of posts
 db_subscribers = DatabaseSubscribers()  # import database of subscribers
 
 
-async def to_subscribers(bot: Bot, message: types.Message):
-    posters = db_posters.get_post()
-    users = db_subscribers.get_subscribers()
-    print(posters)
-    print(users)
-    for post in posters:
-        await bot.send_photo(chat_id=message.from_user.id, caption=post[3], photo=types.URLInputFile(post[1]))
-
-
 @dp.message(Command(commands=['start', 'help']))
 async def start(message: types.Message, bot: Bot):
     print(message.chat.id)
@@ -48,7 +39,10 @@ async def start(message: types.Message, bot: Bot):
 @dp.message(Command(commands=["tomorrow"]))
 async def tomorrow(message: types.Message, bot: Bot):
     await message.answer(text_messages.poster_status_messages["on_poster_tomorrow"])
-    await to_subscribers(bot, message)
+    posters = db_posters.get_post()
+    print(posters)
+    for post in posters:
+        await message.answer_photo(caption=post[3], photo=types.URLInputFile(post[1]))
 
 
 @dp.message()  # функция для обработки новых афиш
