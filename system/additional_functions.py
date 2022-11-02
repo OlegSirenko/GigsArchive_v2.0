@@ -75,4 +75,3 @@ def convert_to_bytes(filename):
     return blob_data
 
 
-

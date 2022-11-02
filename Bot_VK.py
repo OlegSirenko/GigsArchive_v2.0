@@ -7,6 +7,7 @@ from system.additional_functions import vk, bot_main, download_image
 from system.additional_functions import send_photo_tg
 
 
+# coroutine
 async def send_photo(bot, caption):
     await send_photo_tg(bot, caption)
 
@@ -41,7 +42,6 @@ def main():
         url = event.message.attachments[-1].photo.sizes[-1].url
         download_image(url)
         text = event.message.text
-        event.answer("Direct")
         coroutine = send_photo_tg(bot_main, text)
         loop.run_until_complete(coroutine)
 
@@ -51,7 +51,6 @@ def main():
         text += event.message.attachments[-1].wall.text
         url = event.message.attachments[-1].wall.attachments[-1].photo.sizes[-1].url
         download_image(url)
-        event.answer("From Wall")
 
     dp.start_polling(debug=True)
 

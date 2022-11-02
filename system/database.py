@@ -26,7 +26,7 @@ class DatabasePosters:
         self.conn = sqlite3.connect('./resources/databases/posts.db')  # create database for tasks.
         self.cur = self.conn.cursor()
         self.cur.execute("CREATE TABLE IF NOT EXISTS posts(post_id INT PRIMARY KEY, image TEXT, "
-                         "datetime TEXT, text TEXT);")
+                         "datetime INT, text TEXT);")
         self.conn.commit()
 
     def set_post(self, post_id, image, datetime, text):  # datetime здесь это день в который было запощено
@@ -40,7 +40,6 @@ class DatabasePosters:
         if datetime:
             # берем посты за день
             posts = self.cur.execute(f"SELECT * FROM posts WHERE datetime={datetime};").fetchall()
-            self.conn.commit()
         elif last:
             posts = self.cur.execute(f"SELECT * FROM posts;").fetchone()
         else:
