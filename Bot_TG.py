@@ -1,10 +1,11 @@
-import asyncio
+import random
 import datetime
 import logging
 
-import aioschedule
 from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
+from aiogram.filters import Command, state
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 
 from config.admin_info import admins
 from system.additional_functions import bot_main
@@ -20,6 +21,11 @@ dp = Dispatcher()
 db_good = DatabaseGoodPeople()  # import database of good people
 db_posters = DatabasePosters()  # import database of posts
 db_subscribers = DatabaseSubscribers()  # import database of subscribers
+
+
+class SetDatePoster(StatesGroup):
+    choosing_poster = State()
+    choosing_date = State()
 
 
 @dp.message(Command(commands=['start', 'help']))
@@ -38,6 +44,31 @@ async def start(message: types.Message, bot: Bot):
     await message.answer(text_messages.start_messages["additional"])
 
 
+@dp.message(Command(commands=["date"]))
+async def set_poster_date(message: types.Message, state: FSMContext):
+    await message.answer("Отправьте мне картинку афиши на завтра")
+    await state.set_state(SetDatePoster.choosing_poster)
+
+
+@dp.message(SetDatePoster.choosing_poster)
+async def poster_chosen(message: types.Message, state: FSMContext):
+    photo = message.photo[-1]
+    await state.update_data(choosing_poster=photo)
+    await message.answer(text="Отлично, теперь отправьте мне дату мероприятия")
+    await state.set_state(SetDatePoster.choosing_date)
+
+
+@dp.message(SetDatePoster.choosing_date)
+async def date_chosen(message: types.Message, state: FSMContext, bot: Bot):
+    picture = await state.get_data()
+    print(picture["choosing_poster"])
+    date = int(message.text)
+    await message.answer(f"Отлчино, ваш пост добавлен в  датабазу  на дату {date}, пост айди {message.message_id}")
+    await bot.download(picture["choosing_poster"], destination=f'resources/images/{date}.jpg')
+    db_posters.set_post(post_id=message.message_id, image="local", datetime=date, text="#Cегодня\nВыбор редакции!")
+    await state.clear()
+
+
 @dp.message(Command(commands=["tomorrow"]))
 async def tomorrow(message: types.Message):
     date = str(datetime.date.today()+datetime.timedelta(days=1)).replace('-', '')
@@ -47,7 +78,10 @@ async def tomorrow(message: types.Message):
     if posters:
         await message.answer(text_messages.poster_status_messages["on_poster_tomorrow"])
         for post in posters:
-            await message.answer_photo(caption=post[3], photo=types.URLInputFile(post[1]))
+            if not str(post[1]) == 'local':
+                await message.answer_photo(caption=post[3], photo=types.URLInputFile(post[1]))
+            else:
+                await message.answer_photo(caption=post[3], photo=types.FSInputFile(f"resources/images/{post[2]}.jpg"))
     else:
         await message.answer(text_messages.poster_status_messages["on_poster_tomorrow_error"])
 
@@ -61,7 +95,10 @@ async def today(message: types.Message):
     if posters:
         await message.answer(text_messages.poster_status_messages["on_poster_today"])
         for post in posters:
-            await message.answer_photo(caption=post[3], photo=types.URLInputFile(post[1]))
+            if not post[1] == "local":
+                await message.answer_photo(caption=post[3], photo=types.URLInputFile(post[1]))
+            else:
+                await message.answer_photo(caption=post[3], photo=types.FSInputFile(f"resources/images/{post[2]}.jpg"))
     else:
         await message.answer(text_messages.poster_status_messages["on_poster_today_error"])
 
